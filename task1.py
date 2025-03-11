@@ -1,14 +1,18 @@
 import findspark
 findspark.init('/opt/spark')
 from pyspark.sql import SparkSession
+
 spark = SparkSession.builder \
         .appName("TestWithHive") \
         .enableHiveSupport() \
         .getOrCreate()
 
-df = spark.read.option("header", "true").option("inferSchema", "true").csv("hdfs://master:8020//data/myfiles/name.csv")
-df.createOrReplaceTempView("name")
+# Directly query the Hive table named my_table
+df = spark.table("my_table")
+df.show()
 
-spark.sql("SELECT * FROM name").show()
+# Alternatively, you can run a SQL query on it
+spark.sql("SELECT * FROM my_table").show()
+
 print(spark.conf.get("spark.sql.catalogImplementation"))
-exit()
+spark.stop()

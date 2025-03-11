@@ -13,6 +13,7 @@ RUN sed -i -e "s|http://archive.ubuntu.com|http://jp.archive.ubuntu.com|g" /etc/
       python3-pip \
       python-is-python3 \
       coreutils \
+      net-tools \
       libc6-dev \
  && rm -rf /var/lib/apt/lists/*
 
