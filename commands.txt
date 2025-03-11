@@ -1,0 +1,16 @@
+hdfs dfs -mkdir -p /data/myfiles
+hdfs dfs -put name.csv /data/myfiles/
+hive
+set hive.execution.engine=mr;
+
+CREATE TABLE my_table (
+  id INT,
+  name STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+LOAD DATA INPATH '/data/myfiles/data.csv' INTO TABLE my_table;
+
+set hive.execution.engine=spark;

@@ -109,6 +109,8 @@ COPY --chown=$USERNAME:$GROUPNAME conf/hive-site.xml $HIVE_CONF_DIR/
 RUN ln $HADOOP_CONF_DIR/workers $SPARK_CONF_DIR/ \
  && ln $HIVE_CONF_DIR/hive-site.xml $SPARK_CONF_DIR/
 
+RUN pip install findspark
+
 # Entry point
 COPY entrypoint.sh /usr/local/sbin/entrypoint.sh
 RUN sudo chmod a+x /usr/local/sbin/entrypoint.sh
