@@ -58,7 +58,10 @@ SELECT
   ) AS running_total_fare
 From temp;
 """
-spark.sql(simple_query).show(20)
+spark.sql(simple_query)
+total_rows = df_complex.count()
+df_complex.show(5)
 
 print("Success")
+print("Total rows", total_rows)
 spark.stop()

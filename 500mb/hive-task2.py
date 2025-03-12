@@ -28,7 +28,9 @@ JOIN taxi_data_partitioned_csv_500mb b
 """
 
 df_complex = spark.sql(complex_query)
+total_rows = df_complex.count()
 df_complex.show(5)
 
 print("Success")
+print("Total rows", total_rows)
 spark.stop()

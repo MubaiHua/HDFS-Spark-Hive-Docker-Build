@@ -21,7 +21,9 @@ GROUP BY RatecodeID, VendorID, payment_type;
 """
 
 df_complex = spark.sql(complex_query)
+total_rows = df_complex.count()
 df_complex.show(5)
 
 print("Success")
+print("Total rows", total_rows)
 spark.stop()

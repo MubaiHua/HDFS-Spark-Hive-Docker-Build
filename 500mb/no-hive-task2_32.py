@@ -60,7 +60,10 @@ JOIN temp b
        AND a.tpep_pickup_datetime + INTERVAL '10' MINUTE;
 
 """
-spark.sql(simple_query).show(20)
+spark.sql(simple_query)
+total_rows = df_complex.count()
+df_complex.show(5)
 
 print("Success")
+print("Total rows", total_rows)
 spark.stop()
