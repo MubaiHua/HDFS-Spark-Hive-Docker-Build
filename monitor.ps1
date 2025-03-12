@@ -160,4 +160,20 @@ while ($true) {
                 BlockIO   = ("{0} MB / {1} MB" -f $blockRxMB, $blockTxMB)
                 PIDs      = $totalPIDs
             }
-            # Add a
+            # Add aggregated row to our list (it will appear after the individual rows)
+            $statsList += $aggObj
+        }
+    }
+    
+    # Write or append the stats to the CSV file
+    if ($firstIteration) {
+        $statsList | Export-Csv -Path $CsvName -NoTypeInformation
+        $firstIteration = $false
+    } else {
+        $statsList | Export-Csv -Path $CsvName -NoTypeInformation -Append
+    }
+    
+    Write-Output "Stats recorded at $timestamp"
+    # Wait for 5 seconds before the next recording cycle
+    Start-Sleep -Seconds 5
+}
