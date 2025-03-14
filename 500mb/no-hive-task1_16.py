@@ -52,7 +52,7 @@ FROM temp
 GROUP BY RatecodeID, VendorID, payment_type;
 
 """
-spark.sql(simple_query)
+df_complex = spark.sql(simple_query)
 total_rows = df_complex.count()
 df_complex.show(5)
 

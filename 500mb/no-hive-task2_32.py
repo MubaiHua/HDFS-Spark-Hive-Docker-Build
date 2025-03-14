@@ -1,15 +1,15 @@
 import findspark
 findspark.init('/opt/spark')
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, IntegerType, TimestampType, DoubleType
+from pyspark.sql.types import StructType, StructField, IntegerType, TimestampType, DoubleType, StringType
 
 spark = SparkSession.builder \
-    .appName("Test500MB_Join_32") \
+    .appName("Test500MB_ExternalJoin_32") \
     .config("spark.sql.catalogImplementation", "in-memory") \
     .getOrCreate()
 
-# Define the explicit schema
-schema = StructType([
+# Define the explicit schema for the taxi data CSV
+taxi_schema = StructType([
     StructField("VendorID", IntegerType(), True),
     StructField("tpep_pickup_datetime", TimestampType(), True),
     StructField("tpep_dropoff_datetime", TimestampType(), True),
@@ -28,41 +28,53 @@ schema = StructType([
     StructField("total_amount", DoubleType(), True)
 ])
 
-# Read CSV files from HDFS using the explicit schema
+# Read the taxi data CSV from HDFS using the explicit schema
 df = spark.read.option("header", "true") \
-    .schema(schema) \
+    .schema(taxi_schema) \
     .csv("hdfs://master:8020/data/500mb.csv")
 
-# Repartition the DataFrame to a fixed number of partitions (e.g., 10)
+# Repartition the DataFrame (e.g., 4 partitions)
 df = df.repartition(32)
 
-# Create a temporary view to run SQL queries on the repartitioned data
+# Create a temporary view for the taxi data
 df.createOrReplaceTempView("temp")
 
-# Example SQL query to aggregate trip count, average fare, and total revenue by RatecodeID, VendorID, and payment_type
-# Another example SQL query with window functions
-simple_query = """
-SELECT 
-  a.VendorID,
-  a.RatecodeID,
-  a.payment_type,
-  a.tpep_pickup_datetime AS pickup_time_a,
-  b.tpep_pickup_datetime AS pickup_time_b,
-  a.total_amount AS total_amount_a,
-  b.total_amount AS total_amount_b
-FROM temp a
-JOIN temp b
-  ON a.VendorID = b.VendorID
-  AND a.RatecodeID = b.RatecodeID
-  AND a.payment_type = b.payment_type
-  AND a.tpep_pickup_datetime < b.tpep_pickup_datetime
-  AND b.tpep_pickup_datetime BETWEEN a.tpep_pickup_datetime 
-       AND a.tpep_pickup_datetime + INTERVAL '10' MINUTE;
+# Define an explicit schema for the taxi zone lookup CSV.
+# LocationID is an integer and the rest are strings (including the new service_zone column).
+zone_schema = StructType([
+    StructField("LocationID", IntegerType(), True),
+    StructField("Zone", StringType(), True),
+    StructField("Borough", StringType(), True),
+    StructField("service_zone", StringType(), True)
+])
 
+# Read the taxi zone lookup CSV from HDFS using the explicit schema
+zone_df = spark.read.option("header", "true") \
+    .schema(zone_schema) \
+    .csv("hdfs://master:8020/data/taxi+_zone_lookup.csv")
+
+# Create a temporary view for the zone lookup data
+zone_df.createOrReplaceTempView("zone_lookup")
+
+# Run a simple join query: join taxi data with zone lookup on PULocationID = LocationID
+join_query = """
+SELECT 
+  t.VendorID,
+  t.RatecodeID,
+  t.payment_type,
+  t.tpep_pickup_datetime,
+  t.total_amount,
+  z.Zone AS pickup_zone,
+  z.Borough AS pickup_borough,
+  z.service_zone
+FROM temp t
+JOIN zone_lookup z
+  ON t.PULocationID = z.LocationID
 """
-spark.sql(simple_query)
-total_rows = df_complex.count()
-df_complex.show(5)
+
+df_join = spark.sql(join_query)
+total_rows = df_join.count()
+df_join.show(5)
 
 print("Success")
 print("Total rows", total_rows)
