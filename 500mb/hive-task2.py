@@ -45,9 +45,9 @@ JOIN zone_lookup z
   ON t.PULocationID = z.LocationID
 """
 
-df_join = spark.sql(external_join_query)
-total_rows = df_join.count()
-df_join.show(20)
+df_complex = spark.sql(complex_query)
+total_rows = df_complex.count()
+df_complex.show(5)
 
 print("Success")
 print("Total rows", total_rows)
